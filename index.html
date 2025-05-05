@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <script>
+        // Check if user is logged in
+        window.onload = function() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Financial Tracker</h1>
+            <div>
+                <button class="btn btn-danger me-2" onclick="exportAllToPDF()">
+                    <i class="fas fa-file-pdf"></i> Download All PDF
+                </button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title" style="text-align: center;" ><b>Income & Expenses</b></h5>
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-danger" onclick="exportIncomeExpensesToPDF()">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </button>
+                        </div>
+                        <form id="financialForm">
+                            <div class="mb-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="monthlyIncome" class="form-label">Monthly Income (₹)</label>
+                                <input type="number" class="form-control" id="monthlyIncome" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="rent" class="form-label">Rent (₹)</label>
+                                <input type="number" class="form-control" id="rent" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="otherExpenses" class="form-label">Other Expenses (₹)</label>
+                                <input type="number" class="form-control" id="otherExpenses" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="roomExpenses" class="form-label">Room Expenses (₹)</label>
+                                <input type="number" class="form-control" id="roomExpenses" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sipAmount" class="form-label">SIP Amount (₹)</label>
+                                <input type="number" class="form-control" id="sipAmount" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Add Record</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Financial Summary</h5>
+                        <div class="summary-card">
+                            <p>Total Income: ₹<span id="totalIncome">0.00</span></p>
+                            <p>Total Expenses: ₹<span id="totalExpenses">0.00</span></p>
+                            <p>Total Savings: ₹<span id="totalSavings">0.00</span></p>
+                            <div class="d-flex align-items-center">
+                                <p class="mb-0">Savings Goal: ₹<span id="savingsGoal">0.00</span></p>
+                                <button class="btn btn-sm btn-info ms-2" onclick="editSavingsGoal()">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                        <div class="savings-goal-section">
+                            <div class="input-group mb-3">
+                                <input type="number" class="form-control" id="savingsGoalInput" placeholder="Enter savings goal">
+                                <button class="btn btn-success" onclick="setSavingsGoal()">
+                                    <i class="fas fa-bullseye"></i> Set Goal
+                                </button>
+                            </div>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Financial Records</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Monthly Income</th>
+                                <th>Rent</th>
+                                <th>Other Expenses</th>
+                                <th>Room Expenses</th>
+                                <th>SIP Amount</th>
+                                <th>Net Saving</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTable">
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Total</th>
+                                <th id="totalIncomeTable">₹0.00</th>
+                                <th id="totalRentTable">₹0.00</th>
+                                <th id="totalOtherExpensesTable">₹0.00</th>
+                                <th id="totalRoomExpensesTable">₹0.00</th>
+                                <th id="totalSIPTable">₹0.00</th>
+                                <th id="totalNetSavingTable">₹0.00</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <h5 class="card-title" style="text-align: center;" ><b>Monthly Expense </b></h5>
+            <div class="card-body">
+                <h5 class="card-title">Expense Summary</h5>
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-danger" onclick="exportMonthlyExpensesToPDF()">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </button>
+                </div>
+                <div class="summary-card">
+                    <p>Total Delayed Expenses: ₹<span id="totalDelayedExpenses">0.00</span></p>
+                    <p>Total Room Expenses: ₹<span id="totalRoomExpensesSummary">0.00</span></p>
+                    <p>Total Amount to Pay: ₹<span id="totalAmountToPay">0.00</span></p>
+                </div>
+
+                <div class="expense-section">
+                    <h5 class="card-title">Add New Expense</h5>
+                    <form id="expenseForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="expenseDate" class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="expenseDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="expenseType" class="form-label">Expense Type</label>
+                                    <select class="form-control" id="expenseType" required>
+                                        <option value="delayed">Delayed Expense</option>
+                                        <option value="room">Room Expense</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="expenseAmount" class="form-label">Amount (₹)</label>
+                                    <input type="number" class="form-control" id="expenseAmount" required>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Expense</button>
+                    </form>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5 class="card-title">Delayed Expenses</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="delayedExpensesTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="card-title">Room Expenses</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roomExpensesTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <h5 class="card-title" style="text-align: center;" ><b>Money Transactions</b></h5>
+            <div class="card-body">
+                <h5 class="card-title">Money Transactions Summary</h5>
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-danger" onclick="exportMoneyTransactionsToPDF()">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </button>
+                </div>
+                <div class="summary-card">
+                    <p>Total Amount to Receive: ₹<span id="totalToReceive">0.00</span></p>
+                    <p>Total Amount to Pay: ₹<span id="totalToPay">0.00</span></p>
+                </div>
+
+                <div class="expense-section">
+                    <h5 class="card-title">Add New Money Transaction</h5>
+                    <form id="transactionForm">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="transactionType" class="form-label">Transaction Type</label>
+                                    <select class="form-control" id="transactionType" required>
+                                        <option value="given">Money Given</option>
+                                        <option value="taken">Money Taken</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="personName" class="form-label">Person Name</label>
+                                    <input type="text" class="form-control" id="personName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="transactionDate" class="form-label">Transaction Date</label>
+                                    <input type="date" class="form-control" id="transactionDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="transactionAmount" class="form-label">Amount (₹)</label>
+                                    <input type="number" class="form-control" id="transactionAmount" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="recoveryDate" class="form-label">Expected Recovery/Return Date</label>
+                                    <input type="date" class="form-control" id="recoveryDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionStatus" class="form-label">Status</label>
+                                    <select class="form-control" id="transactionStatus" required>
+                                        <option value="pending">Pending</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Transaction</button>
+                    </form>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5 class="card-title">Money Given</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date Given</th>
+                                        <th>Person Name</th>
+                                        <th>Amount</th>
+                                        <th>Recovery Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moneyGivenTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="card-title">Money Taken</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date Taken</th>
+                                        <th>Person Name</th>
+                                        <th>Amount</th>
+                                        <th>Return Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="moneyTakenTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
